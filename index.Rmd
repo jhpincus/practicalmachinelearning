@@ -2,21 +2,120 @@
 title: "Practical Machine Learning Course Project"
 author: "Jack H. Pincus"
 date: "December 23, 2015"
-output: html_document
+output: 
+  html_document: 
+    keep_md: yes
 ---
+### Introduction
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+The goal of this project is to develop a model to predict how well subjects perform barbell lifts from accelerometer data.  We used data from six subjects who had accelerometers on their belt, forearm, arm, and dumbbell while lifting barbells correctly and incorrectly in five different ways(one correct and four incorrect).  More information about the data and how it was collected is available at: http://groupware.les.inf.puc-rio.br/public/papers/2012.Ugulino.WearableComputing.HAR.Classifier.RIBBON.pdf.  This report describes the methods used to load and analyze the data, build a prediction model using cross validation, the accuracy and out of sample error, and results of predictions on an unrelated test data set.
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+We used functions in R's caret package for this analysis and loaded it first.
+```{r results='hide'}
+library(caret)
+```
 
+### Exploratory Data Analysis
+
+We downloaded the training and test data set to our working directory.  (The training data set is found at:  https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv.  The test data set is at: https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv.) and loaded them into R.
 ```{r}
-summary(cars)
+train <- read.csv("pml-training.csv", stringsAsFactors = FALSE)
+test <- read.csv("pml-testing.csv", stringsAsFactors = FALSE)
 ```
+Next we evaluated the structure of the training and test data and summarized the data for each set.
+```{r results='hide'}
+str(train)
+head(train)
+tail(train)
+summary(train)
 
-You can also embed plots, for example:
-
-```{r, echo=FALSE}
-plot(cars)
+str(test)
+head(test)
+tail(test)
+summary(test)
 ```
+The training set consisted of 19622 observations and 160 features that included an outcome variable.  The test set consisted of 20 observations and 160 features but lacked an outcome variable.  The first seven features of the training and test sets contained experimental descriptors that are not useful predictors.  Inspection of the summary output of both sets showed a large number of features with a significant number of Nas and/ or empty values. We explored these features further.
+```{r results='hide'}
+colSums(is.na(train))
+colSums(train == "", na.rm = TRUE)
+colSums(is.na(test))
+colSums(test == "", na.rm = TRUE)
+```
+Inspection of the output showed only 2% of the observations in features with NAS or empty values in the training set had any data.  The corresponding features in the test set had NAs only.  None of the features in the test set with NAs had any values.  We also computed the number of features with NAs and empty empty values in the training set and with NAs in the test set.
+```{r}
+sum(colSums(is.na(train)) !=0) #number of features with NAs in the training sets
+sum(colSums(train == "", na.rm = TRUE) != 0) #number of features with empty values in the training set
+sum(colSums(is.na(test)) !=0) # number of features with NAs in the test set
+```
+One hundred features in the training and test sets had few or no values.  Further Inspection of the summary outputs of both data sets showed the remaining features in both data sets were either numerical or integer.  In most cases, the means and medians were reasonably close.
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+In summary, the results of the exploratory data analysis showed:
+
+* The first seven features of the training and test sets have no predictive value.
+* The training and test sets contain 100 features with either NAs and/or empty values.
+* There is not enough data in the 100 features with NAs or empty values for imputation.
+* There is no compelling reason to scale the integer or numeric data.
+
+### Preprocessing
+
+Based on the exploratory data analysis, we removed the first seven features from the training set.
+```{r}
+train_proc <- train[, 8:160]
+```
+Then we  removed all features with NAs and empty values in the training set by first converting the empty values to NAs and then removing all columns with NAs.
+```{r}
+train_proc[train_proc == ""] <- NA
+train_proc <- train_proc[, colSums(is.na(train_proc)) == 0]
+```
+Finally, the outcome variable, classe, is a character vector in the training set.  We converted it to a factor vector for analysis.
+```{r}
+train_proc$classe <- as.factor(train_proc$classe)
+```
+We did not preprocess the test set because the model ignores features on which it was not trained.
+
+###Model Creation and Cross Validation
+
+We randomly selected 70% of the training set data to train the model and used the remaining 30% as a hold out to test the predictions.
+```{r}
+set.seed(2015)
+inTrain <- createDataPartition(train_proc$classe, p = 0.7, list = FALSE)
+train_cv <- train_proc[inTrain, ]
+test_cv <- train_proc[-inTrain, ]
+```
+The project required us to  develop model from non-linear multiple classification data.  We selected random forest to build the model because of its accuracy.  Two disadvantages of random forest are it can overfit the training data and be slow to build because it is computationally intensive.  We minimized these disadvantages by setting cross validation (cv) as the resampling method and limited the number of k-fold resamples to 4 in trControl.  We also used Revolution Analytics' Revolution R Open (RRO) for our analysis.  RRO is an enhanced version of R that uses multithreaded math libraries that permit multithreaded computation: https://mran.revolutionanalytics.com/rro/.  Using RRO allowed us to build a model without additional code for parallellization.
+```{r cache=TRUE}
+set.seed(1221)
+rfModel <- train(classe ~ ., data = train_cv, method = "rf",
+                 trControl = trainControl(method="cv", number=4))
+```
+We checked the resulting model with varImp.
+```{r}
+varImp(rfModel)
+```
+The model used 52 of the sixty features. The varImp output showed the 20 most important features.
+
+We made predictions on the hold-out test set and evaluated them with a confusion matrix.
+```{r}
+rfModel_predict <- predict(rfModel, newdata = test_cv)
+confusionMatrix(rfModel_predict, test_cv$classe)
+```
+The random forest model we built performed very well with an accuracy 0.9947 on the hold-out test set or an out of sample error of 0.0053.  These results imply we should also get a very low out of sample error on an unrelated test set.
+
+###Prediction
+
+The best test of a model is evaluate its predictions on an unrelated test set.  We performed this analysis with the test data set.
+```{r results='hide'}
+answers <- predict(rfModel, newdata = test)
+answers <- as.character(answers)
+  #load function for submitting data
+pml_write_files = function(x){
+  n = length(x)
+  for(i in 1:n){
+    filename = paste0("problem_id_",i,".txt")
+    write.table(x[i],file=filename,quote=FALSE,row.names=FALSE,col.names=FALSE)
+  }
+}
+pml_write_files(answers)
+answers
+```
+The model correctly predicted the outcome of all cases.  (The honor code does not permit displaying the answers).  In this case, the accuracy was 100% and the out of sample error 0%.  This data confirms we built a very accurate model to predict how subjects perform barbell exercises from accelerometer data.
