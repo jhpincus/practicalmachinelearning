@@ -117,7 +117,7 @@ colSums(test == &quot;&quot;, na.rm = TRUE)</code></pre>
 <h3>Preprocessing</h3>
 <p>Based on the exploratory data analysis, we removed the first seven features from the training set.</p>
 <pre class="r"><code>train_proc &lt;- train[, 8:160]</code></pre>
-<p>Then we removed all features with NAs and empty values in the training set by first converting the empty values to NAs and then removing all columns with NAs.</p>
+<p>Then we removed all features with NAs and empty values in the training set by first converting the empty values to NAs and then removing all columns with NAs as recommended in this stackoverflow post: <a href="http://stackoverflow.com/questions/12763890/exclude-blank-and-na-in-r" class="uri">http://stackoverflow.com/questions/12763890/exclude-blank-and-na-in-r</a>.</p>
 <pre class="r"><code>train_proc[train_proc == &quot;&quot;] &lt;- NA
 train_proc &lt;- train_proc[, colSums(is.na(train_proc)) == 0]</code></pre>
 <p>Finally, the outcome variable, classe, is a character vector in the training set. We converted it to a factor vector for analysis.</p>

@@ -62,7 +62,7 @@ Based on the exploratory data analysis, we removed the first seven features from
 ```{r}
 train_proc <- train[, 8:160]
 ```
-Then we  removed all features with NAs and empty values in the training set by first converting the empty values to NAs and then removing all columns with NAs.
+Then we  removed all features with NAs and empty values in the training set by first converting the empty values to NAs and then removing all columns with NAs as recommended in this stackoverflow post: http://stackoverflow.com/questions/12763890/exclude-blank-and-na-in-r.
 ```{r}
 train_proc[train_proc == ""] <- NA
 train_proc <- train_proc[, colSums(is.na(train_proc)) == 0]
@@ -83,7 +83,7 @@ train_cv <- train_proc[inTrain, ]
 test_cv <- train_proc[-inTrain, ]
 ```
 The project required us to  develop model from non-linear multiple classification data.  We selected random forest to build the model because of its accuracy.  Two disadvantages of random forest are it can overfit the training data and be slow to build because it is computationally intensive.  We minimized these disadvantages by setting cross validation (cv) as the resampling method and limited the number of k-fold resamples to 4 in trControl.  We also used Revolution Analytics' Revolution R Open (RRO) for our analysis.  RRO is an enhanced version of R that uses multithreaded math libraries that permit multithreaded computation: https://mran.revolutionanalytics.com/rro/.  Using RRO allowed us to build a model without additional code for parallellization.
-```{r cache=TRUE}
+```{r  cache=TRUE}
 set.seed(1221)
 rfModel <- train(classe ~ ., data = train_cv, method = "rf",
                  trControl = trainControl(method="cv", number=4))
