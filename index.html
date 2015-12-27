@@ -132,10 +132,6 @@ test_cv &lt;- train_proc[-inTrain, ]</code></pre>
 <pre class="r"><code>set.seed(1221)
 rfModel &lt;- train(classe ~ ., data = train_cv, method = &quot;rf&quot;,
                  trControl = trainControl(method=&quot;cv&quot;, number=4))</code></pre>
-<pre><code>## Loading required package: randomForest</code></pre>
-<pre><code>## Warning: package 'randomForest' was built under R version 3.2.3</code></pre>
-<pre><code>## randomForest 4.6-12
-## Type rfNews() to see new features/changes/bug fixes.</code></pre>
 <p>We checked the resulting model with varImp.</p>
 <pre class="r"><code>varImp(rfModel)</code></pre>
 <pre><code>## rf variable importance
