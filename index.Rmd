@@ -11,7 +11,7 @@ output:
 The goal of this project is to develop a model to predict how well subjects perform barbell lifts from accelerometer data.  We used data from six subjects who had accelerometers on their belt, forearm, arm, and dumbbell while lifting barbells correctly and incorrectly in five different ways(one correct and four incorrect).  More information about the data and how it was collected is available at: http://groupware.les.inf.puc-rio.br/public/papers/2012.Ugulino.WearableComputing.HAR.Classifier.RIBBON.pdf.  This report describes the methods used to load and analyze the data, build a prediction model using cross validation, the accuracy and out of sample error, and results of predictions on an unrelated test data set.
 
 We used functions in R's caret package for this analysis and loaded it first.
-```{r results='hide'}
+```{r warning=FALSE, message=FALSE}
 library(caret)
 ```
 
@@ -76,7 +76,7 @@ We did not preprocess the test set because the model ignores features on which i
 ###Model Creation and Cross Validation
 
 We randomly selected 70% of the training set data to train the model and used the remaining 30% as a hold out to test the predictions.
-```{r}
+```{r }
 set.seed(2015)
 inTrain <- createDataPartition(train_proc$classe, p = 0.7, list = FALSE)
 train_cv <- train_proc[inTrain, ]
@@ -89,7 +89,7 @@ rfModel <- train(classe ~ ., data = train_cv, method = "rf",
                  trControl = trainControl(method="cv", number=4))
 ```
 We checked the resulting model with varImp.
-```{r}
+```{r warning=FALSE, message=FALSE}
 varImp(rfModel)
 ```
 The model used 52 of the sixty features. The varImp output showed the 20 most important features.

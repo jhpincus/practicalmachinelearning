@@ -73,9 +73,6 @@ img {
 <p>The goal of this project is to develop a model to predict how well subjects perform barbell lifts from accelerometer data. We used data from six subjects who had accelerometers on their belt, forearm, arm, and dumbbell while lifting barbells correctly and incorrectly in five different ways(one correct and four incorrect). More information about the data and how it was collected is available at: <a href="http://groupware.les.inf.puc-rio.br/public/papers/2012.Ugulino.WearableComputing.HAR.Classifier.RIBBON.pdf" class="uri">http://groupware.les.inf.puc-rio.br/public/papers/2012.Ugulino.WearableComputing.HAR.Classifier.RIBBON.pdf</a>. This report describes the methods used to load and analyze the data, build a prediction model using cross validation, the accuracy and out of sample error, and results of predictions on an unrelated test data set.</p>
 <p>We used functions in R’s caret package for this analysis and loaded it first.</p>
 <pre class="r"><code>library(caret)</code></pre>
-<pre><code>## Warning: package 'caret' was built under R version 3.2.3</code></pre>
-<pre><code>## Loading required package: lattice
-## Loading required package: ggplot2</code></pre>
 </div>
 <div id="exploratory-data-analysis" class="section level3">
 <h3>Exploratory Data Analysis</h3>
@@ -141,10 +138,6 @@ rfModel &lt;- train(classe ~ ., data = train_cv, method = &quot;rf&quot;,
 ## Type rfNews() to see new features/changes/bug fixes.</code></pre>
 <p>We checked the resulting model with varImp.</p>
 <pre class="r"><code>varImp(rfModel)</code></pre>
-<pre><code>## Loading required package: randomForest</code></pre>
-<pre><code>## Warning: package 'randomForest' was built under R version 3.2.3</code></pre>
-<pre><code>## randomForest 4.6-12
-## Type rfNews() to see new features/changes/bug fixes.</code></pre>
 <pre><code>## rf variable importance
 ## 
 ##   only 20 most important variables shown (out of 52)
